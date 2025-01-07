@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+	<title>Device settings</title>
+	<style>
+		input[type=submit],
+		input[type=button],
+		button {
+			height: 35px;
+			font-size: 20px;
+			width: 90%;
+			max-width: 300px;
+			margin: 8px 5px;
+			background-color: #4CAF50;
+			border: none;
+			border-radius: 8px;
+			color: white;
+			cursor: pointer;
+			padding: 0px 10px;
+		}
+		body {
+			font-family: Verdana;
+			margin-top: 15px;
+		}
+
+		label {
+			white-space: nowrap;
+			font-size: 20px;
+			margin: 0 5px;
+		}
+		p {
+			font-size: 20px;
+			border-radius: 10px;
+			background-color: #f2f2f2;
+			box-shadow: #aaa 0px 0px 10px;
+			margin: 15px;
+		}
+
+		.access-token-input 
+		{
+			width: 400px;
+		}
+
+		.wifi-stations-block {
+			font-size: 20px;
+			border-radius: 10px;
+			background-color: #ffffff;
+			box-shadow: #fafad2 0px 0px 10px;
+			margin: 15px;
+		}
+	</style>
+</head>
+<body>
+<p>
+The current temperature in the room @roomTemperature
+</p>
+<p>
+  Current day and time
+</p>
+<p>
+	<form method='get' action='dt_set'>
+		<table>
+			<tr>
+				<td>
+					<label>Day of week</label>
+				</td>
+				<td>
+					<input name='Day' length=3>
+				</td>
+			</tr>
+			<tr>
+				<td>					
+				</td>
+				<td>
+					Mon;Tue;Wed;Thu;Fri;Sat;Sun
+				</td>
+			</tr>
+			
+			<tr>
+				<td>
+					<label>Current time(hh:mm)</label>
+				</td>
+				<td>
+				   <input name='time' length=64>
+				</td>
+			</tr>
+		</table>
+			<input type='submit' value="Save">
+	</form>
+</p>
+<p>
+	Temperature depends on time
+</p>
+<p>
+	Monday-Friday
+</p>
+<p>
+	<form method='get' action='wifi_set'>
+		<table>
+			<tr>
+				<td>
+					<label>Time</label>
+				</td>
+				<td>
+					<label>Temperature</label>
+				</td>
+			</tr>
+			<tr>
+				<td>
+					<input name='time0' length=5>
+				</td>
+				<td>
+					<input name='term0' length=3>
+				</td>
+			</tr>
+			<tr>
+				<td>
+					<input name='time1' length=5>
+				</td>
+				<td>
+					<input name='term1' length=3>
+				</td>
+			</tr>
+			<tr>
+				<td>
+					<input name='time2' length=5>
+				</td>
+				<td>
+					<input name='term2' length=3>
+				</td>
+			</tr>
+			<tr>
+				<td>
+					<input name='time3' length=5>
+				</td>
+				<td>
+					<input name='term3' length=3>
+				</td>
+			</tr>
+			<tr>
+				<td>
+					<input name='time4' length=5>
+				</td>
+				<td>
+					<input name='term4' length=3>
+				</td>
+			</tr>
+		</table>
+			<input type='submit' value="Save">
+	</form>
+</p>
+<p>
+	Saturday - Sunday
+</p>
+<p>
+	<form method='get' action='wifi_set'>
+		<table>
+			<tr>
+				<td>
+					<label>Time</label>
+				</td>
+				<td>
+					<label>Temperature</label>
+				</td>
+			</tr>
+			<tr>
+				<td>
+					<input name='time0' length=5>
+				</td>
+				<td>
+					<input name='term0' length=3>
+				</td>
+			</tr>
+			<tr>
+				<td>
+					<input name='time1' length=5>
+				</td>
+				<td>
+					<input name='term1' length=3>
+				</td>
+			</tr>
+			<tr>
+				<td>
+					<input name='time2' length=5>
+				</td>
+				<td>
+					<input name='term2' length=3>
+				</td>
+			</tr>
+			<tr>
+				<td>
+					<input name='time3' length=5>
+				</td>
+				<td>
+					<input name='term3' length=3>
+				</td>
+			</tr>
+			<tr>
+				<td>
+					<input name='time4' length=5>
+				</td>
+				<td>
+					<input name='term4' length=3>
+				</td>
+			</tr>
+		</table>
+			<input type='submit' value="Save">
+	</form>
+</p>
+</body>
+</html>
