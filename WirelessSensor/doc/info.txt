@@ -1,0 +1,6 @@
+Connecting the sensor
+Connect the sensors according to the diagram below.
+ To do this, connect the 5V and GND power supply, 
+ pull the power supply to PIN D3 through a 4.7 kOhm resistor and connect the DATA sensor leg. 
+ 
+ When connecting a moisture–proof sensor: red - power, black – ground, and yellow/white/blue – signal (DATA).

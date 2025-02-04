@@ -1,0 +1,68 @@
+const char mainPage[] PROGMEM = R"=====(
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+	<title>Device settings</title>
+	<style>
+		input[type=submit],
+		input[type=button],
+		button {
+			height: 35px;
+			font-size: 20px;
+			width: 90%;
+			max-width: 300px;
+			margin: 8px 5px;
+			background-color: #4CAF50;
+			border: none;
+			border-radius: 8px;
+			color: white;
+			cursor: pointer;
+			padding: 0px 10px;
+		}
+				
+		body {
+			font-family: Verdana;
+			margin-top: 15px;
+		}
+
+		label {
+			white-space: nowrap;
+			font-size: 20px;
+			margin: 0 5px;
+		}
+		p {
+			font-size: 20px;
+			border-radius: 10px;
+			background-color: #f2f2f2;
+			box-shadow: #aaa 0px 0px 10px;
+			margin: 15px;
+		}
+
+		.access-token-input 
+		{
+			width: 400px;
+		}
+
+		.temperature-block {
+			font-size: 20px;
+			border-radius: 10px;
+			background-color: #ffffff;
+			box-shadow: #fafad2 0px 0px 10px;
+			margin: 15px;
+		}		
+	</style>
+</head>
+<body>
+<p>
+  Remote sensor
+</p>
+
+		<div class="temperature-block">
+	      @temperature 
+		</div>
+
+</body>
+</html>
+)=====";
