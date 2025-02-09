@@ -47,19 +47,19 @@ void setup() {
     ESP.restart();
   } 
    
-   status_ConnectWifi();
    //ESP.wdtEnable(15000);
 
    initWebServer(false); //Init with main page.
+   initTgBot();
 }
 
 void loop() { 
   handleClient(); //Processing incoming requests
-  blinkSystemLed(); 
  
   //Check wifi autoreconnect.
-   getTemperatureHtmlList();
-
+   
+   systemScheduler();
+   botTick();
 }
 
 //Check if device first run.

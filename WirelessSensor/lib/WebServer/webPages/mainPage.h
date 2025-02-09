@@ -62,7 +62,18 @@ const char mainPage[] PROGMEM = R"=====(
 		<div class="temperature-block">
 	      @temperature 
 		</div>
+<p>
+<form method='post' action='reboot'>
+  <input type='submit' value="Reboot device">
+</form>
+</p>
 
 </body>
 </html>
+
+<script language="javascript">
+setInterval(function(){
+   window.location.reload(1);
+}, 3000);
+</script>
 )=====";

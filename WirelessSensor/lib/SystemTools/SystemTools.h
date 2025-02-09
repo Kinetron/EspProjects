@@ -4,13 +4,18 @@
 #include <OneWire.h>
 #include <DallasTemperature.h>
 #include "../eeprom_map.h"
+#include "../accounts.h"
+#include <ESP8266WiFi.h>
+#include "Adafruit_MQTT.h"
+#include "Adafruit_MQTT_Client.h"
+#include <FastBot2.h>
+#include "../version.h"
+#include "../botHelp.h"
 
-#define TIMER0_DIV_VALUE 80000000L * 10 //Сlock frequency 80MHz, 1sec interrupt.
+#define TIMER0_DIV_VALUE 80000000L //Сlock frequency 80MHz, 1sec interrupt. 80Mhz -> 80*10^6 = 1 second
 
-#define BLINK_INTERVAL_DEFAULT 300
-#define BLINK_INTERVAL_WIFI_CONNECT 700
+#define DELAY_REBOOT_INTERVAL 3 //Wait interval after recive reboot command. Second.
 
-#define INTERVAL_READ_TEMPERATURE 1
 
 //void eepromClear(int beginPos, int endPos);
 //void writeStringEeprom(int beginPos, const String &data);
@@ -21,8 +26,6 @@ bool saveWifiSettings(const String &ssid, const String &password);
 
 //Blink led and show system status.
 void blinkSystemLed();
-void status_ConnectWifi(); //Change blink interval
-void status_NoConnectWifi(); //Change blink interval
 
 void timer0_interrupt_handler(void);
 void interruptsConfig();
@@ -30,9 +33,27 @@ void interruptsConfig();
 void initTemperatureSensors();
 int readTemperatureSensorsAdress();
 String addressToString(DeviceAddress deviceAddress);
-float getFirstSensorTemperature();
+
+//Read temperature and create html block with data.
 String getTemperatureHtmlList();
 
 //Return block for show in page.
 String getTemperatureHtml(); 
+
+void systemScheduler();
+void MQTT_connect();
+
+//Wait and reboot device.
+void rebootDevice();
+void beginReboot();
+
+//Init telegram bot.
+void initTgBot();
+//Message handler for bot.
+void tbBotMsgHandler(fb::Update& u);
+//If device run -send messege to user.
+void sendRunHelloMsg();
+void botTick();
+//Handler user commands.
+void executeBotCommand(String msg, String chatID);
 

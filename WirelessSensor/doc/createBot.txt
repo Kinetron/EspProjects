@@ -1,0 +1,7 @@
+
+
+1. @BotFather /newbot 
+2. Create name
+3. Copy id
+4. Get our id @IDBot
+5. find bot and click "start"

@@ -6,15 +6,24 @@ OneWire oneWire(ONE_WIRE_BUS);
 DallasTemperature temperatureSensors(&oneWire);
 
 DeviceAddress temperatureSensorAdress[TEMPERATURESENSOR_MAX_COUNT];
+uint8_t temperatureSensorsCount; //Quantity of sensors
 
-int blinkLedInterval = BLINK_INTERVAL_DEFAULT;
-int resetDeviceFlag = 0; //Flag for begin reboot esp8266.
+int rebootDeviceFlag = 0; //Flag for begin reboot esp8266.
 
 String temperatureHtml = "Wait temperature.."; 
-int counterReadTemperature = 1;
 
-bool systemLedStatus;
+bool systemLedStatus; //For blink led.
 
+//If timer1 handle interrupt, this flag set true.
+bool hasOneSecondTick = false;
+
+WiFiClient client;
+Adafruit_MQTT_Client mqtt(&client, AIO_SERVER, AIO_SERVERPORT, AIO_USERNAME, AIO_KEY);
+Adafruit_MQTT_Publish Temperature = Adafruit_MQTT_Publish(&mqtt, AIO_USERNAME "/feeds/Sensor5_temperature");
+
+FastBot2 bot;
+
+bool deviceFirstRun; //For send bot message on start.
 /*
 void eepromClear(int beginPos, int endPos)
 {
@@ -58,7 +67,6 @@ bool saveWifiSettings(const String &ssid, const String &password)
 //Blink led and show system status.
 void blinkSystemLed()
 { 
-   delay(1000);
   if(systemLedStatus)
   {
     digitalWrite(LED_BUILTIN, LOW); 
@@ -69,17 +77,6 @@ void blinkSystemLed()
      digitalWrite(LED_BUILTIN, HIGH);
      systemLedStatus = true;
   }  
-}
-
-//Change blink interval
-void status_ConnectWifi()
-{
-  blinkLedInterval = BLINK_INTERVAL_WIFI_CONNECT;
-}
-
-void status_NoConnectWifi()
-{
-  blinkLedInterval = BLINK_INTERVAL_DEFAULT;
 }
 
 void interruptsConfig()
@@ -95,29 +92,8 @@ void timer0_interrupt_handler(void)
 {
   //pingHost();
 
-   //Process module reset.
-   switch(resetDeviceFlag) //Flag for begin reboot esp8266.)
-   {
-    case 1: resetDeviceFlag = 2; //Wait 2sec for some time to send answer in telegram.
-    break;
-    case 2:
-      ESP.restart();
-    break;
-    default: break;
-   } 
-
-  timer0_write(ESP.getCycleCount() + TIMER0_DIV_VALUE); //Тактовая частота 80MHz, получаем секунду 
-
-  //Read temperature.
-  if(counterReadTemperature < INTERVAL_READ_TEMPERATURE )
-  {
-    counterReadTemperature ++;
-  }
-  else
-  {
-    counterReadTemperature = 1;
-   
-  }
+  timer0_write(ESP.getCycleCount() + TIMER0_DIV_VALUE);
+  hasOneSecondTick = true;
 }
 
 void initTemperatureSensors()
@@ -126,14 +102,9 @@ void initTemperatureSensors()
    readTemperatureSensorsAdress();
 }
 
-float getFirstSensorTemperature()
-{
-  return temperatureSensors.getTempC(temperatureSensorAdress[0]);
-}
-
 int readTemperatureSensorsAdress()
 {
-  uint8_t temperatureSensorsCount = temperatureSensors.getDeviceCount();
+  temperatureSensorsCount = temperatureSensors.getDeviceCount();
   if(temperatureSensorsCount > TEMPERATURESENSOR_MAX_COUNT)
   {
     temperatureSensorsCount = TEMPERATURESENSOR_MAX_COUNT;
@@ -163,27 +134,24 @@ String addressToString(DeviceAddress deviceAddress)
   return str;
 }
 
+//Read temperature and create html block with data.
 String getTemperatureHtmlList()
 {
-  /*
-  int count = readTemperatureSensorsAdress();
-  if(count == 0)
-  {
-    return "Any temperature sensor not found";
-  }
-*/
-int count = 1;
- 
   float temperature = 0;
   temperatureSensors.requestTemperatures();
   String html = "<ol>";
-  for (int i = 0; i < count; ++i)
+  for (int i = 0; i < temperatureSensorsCount; ++i)
   {
     String addr = addressToString(temperatureSensorAdress[i]);
     temperature = temperatureSensors.getTempC(temperatureSensorAdress[i]);
     html += "<li>";
-    html += "Temperature: " + String(temperature) + " " + addr;
+    html += "Temperature: " + String(temperature) + "&deg;C " + addr;
     html += "</li>";
+
+    if(i == 0)
+    {
+      Temperature.publish(temperature);
+    }
   }
 
   html += "</ol>";
@@ -197,3 +165,161 @@ String getTemperatureHtml()
 {
   return temperatureHtml;
 } 
+
+void systemScheduler()
+{
+    if(!hasOneSecondTick)
+    {
+      return;
+    }
+    
+    blinkSystemLed();
+    
+    if(rebootDeviceFlag > 0) //Reboot delay if has reboot command.
+    {
+      beginReboot();
+    }
+
+    if(!deviceFirstRun)
+    {
+      deviceFirstRun = true;
+      sendRunHelloMsg();
+    }
+
+    getTemperatureHtmlList(); //Read temperature.
+    MQTT_connect();
+    hasOneSecondTick = false;
+}
+
+void MQTT_connect() 
+{
+  int8_t ret;
+  if (mqtt.connected()) 
+  {
+    return;
+  }
+
+  uint8_t retries = 5;
+  while ((ret = mqtt.connect()) != 0) { // connect will return 0 for connected
+
+       mqtt.disconnect();
+       delay(5000);  // wait 5 seconds
+       retries--;
+  }
+ 
+}
+
+//Wait and reboot device.
+void rebootDevice()
+{
+  //Init reboot process
+   if(rebootDeviceFlag == 0)
+   {
+     rebootDeviceFlag = 1;
+   }
+}
+
+void beginReboot()
+{
+    if(rebootDeviceFlag < DELAY_REBOOT_INTERVAL)
+    {
+      rebootDeviceFlag ++;
+    }
+    else
+    {
+      ESP.restart();
+    }
+}
+
+//Init telegram bot.
+void initTgBot()
+{
+   bot.attachUpdate(tbBotMsgHandler);
+   bot.setToken(F(TG_BOT_TOKEN));
+   bot.setPollMode(fb::Poll::Long, 20000);
+}
+
+//Message handler for bot.
+void tbBotMsgHandler(fb::Update& u) {
+
+ //Update firmware.
+ /*
+  if(u.message().text() == "/updfw")
+  {
+      //Download bin.
+      bot.sendMessage(fb::Message("Ok", EXT_USER_ID)); 
+
+      fb::Fetcher fetch = bot.downloadFile(u.message().document().id());        
+      bool ok = fetch.updateFlash(); // OTA
+      
+      bot.sendMessage(fb::Message(ok ? "OTA done" : "OTA error", EXT_USER_ID));//u.message().chat().id())); 
+      return;
+  }
+*/
+
+/*
+if (u.isMessage() && 
+        u.message().hasDocument()// &&
+        //u.message().document().name().endsWith(".bin")
+    ) {
+        // качаем файл
+        fb::Fetcher fetch = bot.downloadFile(u.message().document().id());
+        bot.sendMessage(fb::Message("Ok", EXT_USER_ID));
+        // OTA
+        bool ok = fetch.updateFlash();
+        
+        // отправляем сообщение с результатом
+        bot.sendMessage(fb::Message(ok ? "OTA done" : "OTA error", u.message().chat().id()));
+    }
+    */
+
+    if (u.message().hasDocument() )//&& u.message().document().name().endsWith(".bin")) 
+    {
+        bot.updateFlash(u.message().document(), u.message().chat().id());
+    }
+   executeBotCommand(u.message().text(), String(u.id()));
+}
+
+//If device run -send messege to user.
+void sendRunHelloMsg()
+{
+  fb::Message msg;
+  msg.text = "The device load. FW Ver = " + String(FIRMWARE_VERSION);
+  msg.chatID = EXT_USER_ID;
+ 
+  bot.sendMessage(msg);
+}
+
+void botTick()
+{
+  bot.tick();
+}
+
+//Handler user commands.
+void executeBotCommand(String userCommand, String chatID)
+{
+  fb::Message msg;
+
+  if (userCommand == "/help")
+	{
+    String help = botHelp;
+    msg.text = help;
+	}
+  else if (userCommand == "/ver")
+	{
+	  msg.text = "FW Ver = " + String(FIRMWARE_VERSION);
+	}
+  else if (userCommand == "/data")
+	{
+	  msg.text = temperatureHtml;
+	}
+  else if (userCommand == "/reboot")
+  {
+    msg.text = "Wait untill device reboot.";
+    rebootDevice();
+  }
+
+  msg.chatID = EXT_USER_ID;
+ 
+  bot.sendMessage(msg);
+}

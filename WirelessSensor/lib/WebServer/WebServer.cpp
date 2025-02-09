@@ -20,7 +20,6 @@ ESP8266WebServer server(80);
 String webServerContent; //web server content
 int webStatusCode; //Web server last status code.
 extern String wifi_stations; //Available access points, from scan.
-extern int resetDeviceFlag; //Flag for begin reboot esp8266.
 
 //Return page whith wifi settings.
 void createWebServerWithDefaultPage()
@@ -57,12 +56,12 @@ void createWebServerWithDefaultPage()
         else
         {
           result = "{\"Success\":\"Saved to eeprom... Begin reset to boot into new wifi. Wait 10sec.\"}";
-		  resetDeviceFlag = 1;          
+          rebootDevice();
         }
       }
 
       String page = responsePage;
-	  page.replace("@response", result);
+	    page.replace("@response", result);
       server.send(200, "text/html", page); 
     });
 }
@@ -76,6 +75,13 @@ void createWebServer()
 	  page.replace("@temperature", getTemperatureHtml());	  
       server.send(200, "text/html", page);
     });    
+
+   server.on("/reboot", HTTP_POST,[]() {
+      rebootDevice();
+      String page = responsePage;
+	    page.replace("@response", "Begin reboot...");
+       server.send(200, "text/html", page);
+   });
 }
 
 void runWebServer()
