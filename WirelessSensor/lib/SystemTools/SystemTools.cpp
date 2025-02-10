@@ -21,7 +21,7 @@ WiFiClient client;
 Adafruit_MQTT_Client mqtt(&client, AIO_SERVER, AIO_SERVERPORT, AIO_USERNAME, AIO_KEY);
 Adafruit_MQTT_Publish Temperature = Adafruit_MQTT_Publish(&mqtt, AIO_USERNAME "/feeds/Sensor5_temperature");
 
-FastBot2 bot;
+FastBot bot(TG_BOT_TOKEN);
 
 bool deviceFirstRun; //For send bot message on start.
 /*
@@ -189,6 +189,7 @@ void systemScheduler()
     getTemperatureHtmlList(); //Read temperature.
     MQTT_connect();
     hasOneSecondTick = false;
+    
 }
 
 void MQTT_connect() 
@@ -234,60 +235,22 @@ void beginReboot()
 //Init telegram bot.
 void initTgBot()
 {
-   bot.attachUpdate(tbBotMsgHandler);
-   bot.setToken(F(TG_BOT_TOKEN));
-   bot.setPollMode(fb::Poll::Long, 20000);
+   bot.attach(tgBotMsgHandler);
 }
 
 //Message handler for bot.
-void tbBotMsgHandler(fb::Update& u) {
+void tgBotMsgHandler(FB_msg& msg) {
 
  //Update firmware.
- /*
-  if(u.message().text() == "/updfw")
-  {
-      //Download bin.
-      bot.sendMessage(fb::Message("Ok", EXT_USER_ID)); 
 
-      fb::Fetcher fetch = bot.downloadFile(u.message().document().id());        
-      bool ok = fetch.updateFlash(); // OTA
-      
-      bot.sendMessage(fb::Message(ok ? "OTA done" : "OTA error", EXT_USER_ID));//u.message().chat().id())); 
-      return;
-  }
-*/
 
-/*
-if (u.isMessage() && 
-        u.message().hasDocument()// &&
-        //u.message().document().name().endsWith(".bin")
-    ) {
-        // качаем файл
-        fb::Fetcher fetch = bot.downloadFile(u.message().document().id());
-        bot.sendMessage(fb::Message("Ok", EXT_USER_ID));
-        // OTA
-        bool ok = fetch.updateFlash();
-        
-        // отправляем сообщение с результатом
-        bot.sendMessage(fb::Message(ok ? "OTA done" : "OTA error", u.message().chat().id()));
-    }
-    */
-
-    if (u.message().hasDocument() )//&& u.message().document().name().endsWith(".bin")) 
-    {
-        bot.updateFlash(u.message().document(), u.message().chat().id());
-    }
-   executeBotCommand(u.message().text(), String(u.id()));
+   executeBotCommand(msg);
 }
 
 //If device run -send messege to user.
 void sendRunHelloMsg()
 {
-  fb::Message msg;
-  msg.text = "The device load. FW Ver = " + String(FIRMWARE_VERSION);
-  msg.chatID = EXT_USER_ID;
- 
-  bot.sendMessage(msg);
+  bot.sendMessage("The device is loaded. FW Version " + String(FIRMWARE_VERSION), EXT_USER_ID);
 }
 
 void botTick()
@@ -296,30 +259,36 @@ void botTick()
 }
 
 //Handler user commands.
-void executeBotCommand(String userCommand, String chatID)
+void executeBotCommand(FB_msg msg)
 {
-  fb::Message msg;
 
+  //Update firmware.
+  if (msg.OTA && msg.text == FIRMWARE_UPDATE_PASSWORD) 
+  {
+    int status = bot.update();
+    if(status != 1)  bot.sendMessage(String(status), msg.chatID);     
+  }
+
+  String userCommand = msg.text;
+  String responseMsg = "";
   if (userCommand == "/help")
 	{
     String help = botHelp;
-    msg.text = help;
+    responseMsg = help;
 	}
   else if (userCommand == "/ver")
 	{
-	  msg.text = "FW Ver = " + String(FIRMWARE_VERSION);
+	  responseMsg = "FW Ver = " + String(FIRMWARE_VERSION);
 	}
   else if (userCommand == "/data")
 	{
-	  msg.text = temperatureHtml;
+	  responseMsg = temperatureHtml;
 	}
   else if (userCommand == "/reboot")
   {
-    msg.text = "Wait untill device reboot.";
+    responseMsg = "Wait untill device reboot.";
     rebootDevice();
   }
 
-  msg.chatID = EXT_USER_ID;
- 
-  bot.sendMessage(msg);
+  bot.sendMessage(responseMsg, EXT_USER_ID);
 }

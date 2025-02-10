@@ -17,6 +17,9 @@ const char responsePage[] PROGMEM = R"=====(
 
 //Establishing Local server at port 80 whenever required
 ESP8266WebServer server(80);
+ESP8266HTTPUpdateServer httpUpdater;
+const char* host = "esp8266-webupdate";
+
 String webServerContent; //web server content
 int webStatusCode; //Web server last status code.
 extern String wifi_stations; //Available access points, from scan.
@@ -85,8 +88,12 @@ void createWebServer()
 }
 
 void runWebServer()
-{
+{  
+  MDNS.begin(host);
+  httpUpdater.setup(&server);
   server.begin();
+  MDNS.addService("http", "tcp", 80); 
+  //! Open http://%s.local/update in your browser\n
 }
 
 void handleClient()

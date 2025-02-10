@@ -55,7 +55,6 @@ void setup() {
 
 void loop() { 
   handleClient(); //Processing incoming requests
- 
   //Check wifi autoreconnect.
    
    systemScheduler();

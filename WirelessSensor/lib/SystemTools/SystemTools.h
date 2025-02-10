@@ -8,7 +8,7 @@
 #include <ESP8266WiFi.h>
 #include "Adafruit_MQTT.h"
 #include "Adafruit_MQTT_Client.h"
-#include <FastBot2.h>
+#include <FastBot.h>
 #include "../version.h"
 #include "../botHelp.h"
 
@@ -50,10 +50,10 @@ void beginReboot();
 //Init telegram bot.
 void initTgBot();
 //Message handler for bot.
-void tbBotMsgHandler(fb::Update& u);
+void tgBotMsgHandler(FB_msg& msg);
 //If device run -send messege to user.
 void sendRunHelloMsg();
 void botTick();
 //Handler user commands.
-void executeBotCommand(String msg, String chatID);
+void executeBotCommand(FB_msg msg);
 
