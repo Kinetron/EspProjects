@@ -1,0 +1,10 @@
+Get flash size:
+
+https://espressif.com/en/support/download/other-tools
+
+Use Espressif's flash download tool - 
+don't select anything to flash to the device, select the appropriate com port,
+ click start, and the details of the device will appear in
+the Detected Info window
+
+chipInfoDump->ChipInfo

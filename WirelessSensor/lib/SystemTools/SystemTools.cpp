@@ -18,12 +18,19 @@ bool systemLedStatus; //For blink led.
 bool hasOneSecondTick = false;
 
 WiFiClient client;
+
 Adafruit_MQTT_Client mqtt(&client, AIO_SERVER, AIO_SERVERPORT, AIO_USERNAME, AIO_KEY);
-Adafruit_MQTT_Publish Temperature = Adafruit_MQTT_Publish(&mqtt, AIO_USERNAME "/feeds/Sensor5_temperature");
+Adafruit_MQTT_Publish temperatureMqtt = Adafruit_MQTT_Publish(&mqtt, AIO_USERNAME "/feeds/Sensor5_temperature");
+float lastTemperature = 0; 
+int sendParamTimer = 0;
 
 FastBot bot(TG_BOT_TOKEN);
 
 bool deviceFirstRun; //For send bot message on start.
+
+unsigned long  lastBlinkTime = 0; //For blink blue led.
+unsigned long  ledBlinkPeriod = 0;  
+
 /*
 void eepromClear(int beginPos, int endPos)
 {
@@ -64,9 +71,26 @@ bool saveWifiSettings(const String &ssid, const String &password)
     return true;
 }
 
+static uint16_t reset = 0;
+uint16_t onTime = 1000, cycleTime = 1000;
+
+uint16_t littleMillis()
+{
+  return millis() & 65535;
+}
+
 //Blink led and show system status.
 void blinkSystemLed()
-{ 
+{     
+  unsigned long currentTime = millis();
+ 
+  if (currentTime - lastBlinkTime < ledBlinkPeriod)
+  {
+    return;
+  }
+  
+  lastBlinkTime = currentTime;
+ 
   if(systemLedStatus)
   {
     digitalWrite(LED_BUILTIN, LOW); 
@@ -76,7 +100,7 @@ void blinkSystemLed()
   {
      digitalWrite(LED_BUILTIN, HIGH);
      systemLedStatus = true;
-  }  
+  }    
 }
 
 void interruptsConfig()
@@ -85,13 +109,21 @@ void interruptsConfig()
   timer0_isr_init(); //Timer interrupts.
   timer0_attachInterrupt(timer0_interrupt_handler); 
   timer0_write(ESP.getCycleCount() + TIMER0_DIV_VALUE); //80mhz, one second
+
+  /*
+  timer1_attachInterrupt(timer1_interrupt_handler);
+  timer1_write(31250); // 80MHz / 256 (TIM_DIV256) / 312500 => 1s
+  timer1_enable(TIM_DIV256, TIM_EDGE, TIM_LOOP);
+  */
   interrupts();
+}
+
+void timer1_interrupt_handler(void)
+{  
 }
 
 void timer0_interrupt_handler(void)
 {
-  //pingHost();
-
   timer0_write(ESP.getCycleCount() + TIMER0_DIV_VALUE);
   hasOneSecondTick = true;
 }
@@ -150,7 +182,7 @@ String getTemperatureHtmlList()
 
     if(i == 0)
     {
-      Temperature.publish(temperature);
+      lastTemperature = temperature;
     }
   }
 
@@ -168,13 +200,14 @@ String getTemperatureHtml()
 
 void systemScheduler()
 {
+    blinkSystemLed();
+
     if(!hasOneSecondTick)
     {
       return;
     }
-    
-    blinkSystemLed();
-    
+    hasOneSecondTick = false;
+       
     if(rebootDeviceFlag > 0) //Reboot delay if has reboot command.
     {
       beginReboot();
@@ -187,27 +220,39 @@ void systemScheduler()
     }
 
     getTemperatureHtmlList(); //Read temperature.
-    MQTT_connect();
-    hasOneSecondTick = false;
-    
+    publichData();    
+    //pingHost();
 }
 
 void MQTT_connect() 
 {
   int8_t ret;
-  if (mqtt.connected()) 
-  {
+
+  // Stop if already connected.
+  if (mqtt.connected()) {
+    ledBlinkNormalMode();
     return;
   }
 
-  uint8_t retries = 5;
-  while ((ret = mqtt.connect()) != 0) { // connect will return 0 for connected
+  Serial.print("Connecting to MQTT... ");
 
-       mqtt.disconnect();
-       delay(5000);  // wait 5 seconds
-       retries--;
+  uint8_t retries = 3;
+  while ((ret = mqtt.connect()) != 0) {  // connect will return 0 for connected
+      
+      ledBlinkModeFindWifi(); //Fast blink - connected problem.
+      Serial.println(mqtt.connectErrorString(ret));
+      Serial.println("Retrying MQTT connection in 5 seconds...");
+      mqtt.disconnect();
+      delay(5000);  // wait 5 seconds
+      
+      retries--;
+      
+      if (retries == 0) {
+        Serial.println("MQTT can't connected!");
+         return;
+       }
   }
- 
+  Serial.println("MQTT Connected!"); 
 }
 
 //Wait and reboot device.
@@ -262,13 +307,14 @@ void botTick()
 void executeBotCommand(FB_msg msg)
 {
 
+  /*
   //Update firmware.
   if (msg.OTA && msg.text == FIRMWARE_UPDATE_PASSWORD) 
   {
     int status = bot.update();
     if(status != 1)  bot.sendMessage(String(status), msg.chatID);     
   }
-
+*/
   String userCommand = msg.text;
   String responseMsg = "";
   if (userCommand == "/help")
@@ -291,4 +337,34 @@ void executeBotCommand(FB_msg msg)
   }
 
   bot.sendMessage(responseMsg, EXT_USER_ID);
+}
+
+void publichData()
+{
+  if(sendParamTimer < INTERVAL_SEND_PARAMS)
+  {
+    sendParamTimer ++;
+  }
+  else
+  {
+    sendParamTimer = 0;
+    temperatureMqtt.publish(lastTemperature);
+  }  
+}
+
+void initPingWatchDog()
+{
+  initPingWatchdog();
+}
+
+//Set blink period find wifi.
+void ledBlinkModeFindWifi()
+{
+  ledBlinkPeriod = LED_CONNECT_BLINK_INTERVAL;
+}
+
+//Set normal blink mode.
+void ledBlinkNormalMode()
+{
+  ledBlinkPeriod = LED_NORMAL_BLINK_INTERVAL;
 }

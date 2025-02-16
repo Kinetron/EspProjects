@@ -9,12 +9,20 @@
 #include "Adafruit_MQTT.h"
 #include "Adafruit_MQTT_Client.h"
 #include <FastBot.h>
+#include <PingWatchdog.h>
 #include "../version.h"
 #include "../botHelp.h"
 
 #define TIMER0_DIV_VALUE 80000000L //Сlock frequency 80MHz, 1sec interrupt. 80Mhz -> 80*10^6 = 1 second
 
 #define DELAY_REBOOT_INTERVAL 3 //Wait interval after recive reboot command. Second.
+
+#define LED_NORMAL_BLINK_INTERVAL 1000
+#define LED_CONNECT_BLINK_INTERVAL 300  //Find wifi and connect.
+
+//Monitoring params.
+#define MIN_ALARM_TEMPERATURE 10.1
+#define INTERVAL_SEND_PARAMS 15
 
 
 //void eepromClear(int beginPos, int endPos);
@@ -28,6 +36,7 @@ bool saveWifiSettings(const String &ssid, const String &password);
 void blinkSystemLed();
 
 void timer0_interrupt_handler(void);
+void timer1_interrupt_handler(void);
 void interruptsConfig();
 
 void initTemperatureSensors();
@@ -56,4 +65,11 @@ void sendRunHelloMsg();
 void botTick();
 //Handler user commands.
 void executeBotCommand(FB_msg msg);
+void publichData();
+void initPingWatchDog();
+
+//Set blink period find wifi.
+void ledBlinkModeFindWifi();
+//Set normal blink mode.
+void ledBlinkNormalMode();
 

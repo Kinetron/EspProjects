@@ -19,6 +19,7 @@ void setup() {
   //Device first run?
   if(firstRunCheck())
   {
+    ledBlinkModeFindWifi(); //Fast blink while no connected.
     initAp();
     initWebServer(true);
 
@@ -51,14 +52,22 @@ void setup() {
 
    initWebServer(false); //Init with main page.
    initTgBot();
+   
+   ledBlinkNormalMode();
+   //initPingWatchDog();
+   //debug
+  Serial.begin(9600);
+  Serial.println();
+  Serial.println("Booting Sketch... ");
 }
 
-void loop() { 
+void loop() {   
   handleClient(); //Processing incoming requests
+  mdnsUpdate();
   //Check wifi autoreconnect.
-   
-   systemScheduler();
-   botTick();
+  MQTT_connect(); 
+  systemScheduler();
+  botTick();
 }
 
 //Check if device first run.

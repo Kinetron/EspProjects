@@ -1,5 +1,6 @@
 #include "WiFiTools.h"
 String wifi_stations; //Available access points, from scan.
+bool ledStatus; //For blink.
 
 bool connectWiFi()
 {
@@ -12,24 +13,25 @@ bool connectWiFi()
   String ssid = readStringEeprom(EEPROM_INIT_WORD_LEN, EEPROM_CLIENT_SSID_LEN); 
   String password = readStringEeprom(EEPROM_INIT_WORD_LEN + EEPROM_CLIENT_SSID_LEN, EEPROM_CLIENT_SSID_LEN + EEPROM_CLIENT_PASSWORD_LEN);
 
-  delay(2000);
+  delay(DELAY_WIFI_AFTER_RUN);
   WiFi.begin(ssid.c_str(), password.c_str());
   int attempts = 0; 
   while (WiFi.status() != WL_CONNECTED) 
-  {
-    delay(500);
+  {    
+    delay(DELAY_WIFI_CONNECT_INTERVAL);
     if(attempts > WIFI_СONNECTION_ATTEMPTS)
     {
       return false;
     }
     attempts ++;
+    blinkBlueLed();
   }
   return true;
 }
 
 //Enable AP.
 void initAp()
-{
+{  
   WiFi.mode(WIFI_STA);
   delay(500);  
   wifi_stations = scanNetworks(); //Get list available networks.
@@ -58,4 +60,19 @@ String scanNetworks()
   }
   stations += "</ol>";
   return stations;
+}
+
+//While connect fast blink led.
+void blinkBlueLed()
+{
+  if(ledStatus)
+  {
+    digitalWrite(LED_BUILTIN, LOW); 
+    ledStatus = false;
+  }
+  else
+  {
+     digitalWrite(LED_BUILTIN, HIGH);
+     ledStatus = true;
+  }   
 }
