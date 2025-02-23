@@ -8,7 +8,7 @@ void writeStringEeprom(int beginPos, const String &data)
     for (int i = beginPos; i < beginPos + data.length(); ++i)
     {
       EEPROM.write(i, data[pos]);
-	    yield();
+	    //yield();
       pos ++;
     }
 }
@@ -29,7 +29,7 @@ void eepromClear(int beginPos, int endPos)
   for (int i = beginPos; i < endPos; ++i)
   {
     EEPROM.write(i, 0);
-	yield();
+	//yield();
   }
 }
 
@@ -39,7 +39,7 @@ String readStringEeprom(int beginPos, int len)
   for (int i = beginPos; i < len; ++i)
   {
     str += char(EEPROM.read(i));
-	yield();
+	//yield();
   }
   return str;
 }

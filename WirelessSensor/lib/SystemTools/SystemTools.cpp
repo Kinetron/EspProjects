@@ -21,6 +21,8 @@ WiFiClient client;
 
 Adafruit_MQTT_Client mqtt(&client, AIO_SERVER, AIO_SERVERPORT, AIO_USERNAME, AIO_KEY);
 Adafruit_MQTT_Publish temperatureMqtt = Adafruit_MQTT_Publish(&mqtt, AIO_USERNAME "/feeds/Sensor5_temperature");
+Adafruit_MQTT_Publish gazMqtt = Adafruit_MQTT_Publish(&mqtt, AIO_USERNAME "/feeds/gazValue");
+
 float lastTemperature = 0; 
 int sendParamTimer = 0;
 
@@ -30,6 +32,14 @@ bool deviceFirstRun; //For send bot message on start.
 
 unsigned long  lastBlinkTime = 0; //For blink blue led.
 unsigned long  ledBlinkPeriod = 0;  
+
+const int gazDetectorPin = A0;  // ESP8266 Analog Pin ADC0 = A0 for gaz detector MQ 7.
+int gazDetectorAdcValue;
+
+//System settings.
+struct FlashSettingsStruct_t systemSettings;
+
+String tgBotToken = "";
 
 /*
 void eepromClear(int beginPos, int endPos)
@@ -222,6 +232,8 @@ void systemScheduler()
     getTemperatureHtmlList(); //Read temperature.
     publichData();    
     //pingHost();
+
+    readAdc();
 }
 
 void MQTT_connect() 
@@ -295,7 +307,7 @@ void tgBotMsgHandler(FB_msg& msg) {
 //If device run -send messege to user.
 void sendRunHelloMsg()
 {
-  bot.sendMessage("The device is loaded. FW Version " + String(FIRMWARE_VERSION), EXT_USER_ID);
+  bot.sendMessage("The device is loaded. FW Version " + String(FIRMWARE_VERSION) + ". Local web access: http://" + WiFi.localIP().toString() +"/", EXT_USER_ID);
 }
 
 void botTick()
@@ -349,6 +361,7 @@ void publichData()
   {
     sendParamTimer = 0;
     temperatureMqtt.publish(lastTemperature);
+    gazMqtt.publish(gazDetectorAdcValue);
   }  
 }
 
@@ -367,4 +380,72 @@ void ledBlinkModeFindWifi()
 void ledBlinkNormalMode()
 {
   ledBlinkPeriod = LED_NORMAL_BLINK_INTERVAL;
+}
+
+//Read analog value from A0 pin.
+void readAdc()
+{
+  gazDetectorAdcValue = analogRead(gazDetectorPin);
+}
+
+//Create string for html.
+String getGazDetectorValue()
+{
+  return String(gazDetectorAdcValue);
+}
+
+String getReceiveId(int number)
+{
+  switch(number)
+  {
+    case 0:  return String(systemSettings.receiveId0);
+    case 1:  return String(systemSettings.receiveId1);
+    default: return String(systemSettings.receiveId0);
+  }  
+}
+
+void setReceiveId(String userId, int number)
+{ 
+  switch(number)
+  {
+    case 0: 
+      userId.toCharArray(systemSettings.receiveId0, userId.length()+1);
+      break;
+    case 1: 
+     userId.toCharArray(systemSettings.receiveId1, userId.length()+1);
+      break;
+    default: 
+      userId.toCharArray(systemSettings.receiveId0, userId.length()+1);
+  }  
+}
+
+String getTgBotToken()
+{
+  return String(systemSettings.botToken);
+}
+
+void setTgBotToken(String token)
+{
+  token.toCharArray(systemSettings.botToken, token.length() + 1);
+}
+
+//Store system settings to flash.
+void writeSettingsToFlash()
+{
+  int addr = EEPROM_INIT_WORD_LEN + EEPROM_CLIENT_SSID_LEN + EEPROM_CLIENT_PASSWORD_LEN;
+
+  EEPROM.begin(4095);
+  EEPROM.put(addr, systemSettings);
+  delay(200);
+  EEPROM.commit();                      // Only needed for ESP8266 to get data written
+  EEPROM.end();                         // Free RAM copy of structure
+}
+
+//Read system settings from flash.
+void readSettingsFromFlash()
+{
+  int addr = EEPROM_INIT_WORD_LEN + EEPROM_CLIENT_SSID_LEN + EEPROM_CLIENT_PASSWORD_LEN;
+  EEPROM.begin(4095);
+  EEPROM.get(addr, systemSettings);
+  EEPROM.end();
 }

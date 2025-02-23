@@ -24,11 +24,20 @@
 #define MIN_ALARM_TEMPERATURE 10.1
 #define INTERVAL_SEND_PARAMS 15
 
+#define EEPROM_TELEGRAM_BOT_TOKEN_LEN 64
+#define EEPROM_TELEGRAM_CLIENT_ID_LEN 15
 
-//void eepromClear(int beginPos, int endPos);
-//void writeStringEeprom(int beginPos, const String &data);
-
-
+//For store system data to flash.
+struct FlashSettingsStruct_t
+{
+  char wifiSsid[EEPROM_CLIENT_SSID_LEN];
+  char wifiPassword[EEPROM_CLIENT_PASSWORD_LEN];
+  char botToken[EEPROM_TELEGRAM_BOT_TOKEN_LEN];
+  char receiveId0[EEPROM_TELEGRAM_CLIENT_ID_LEN]; //User id who will receive messages from the bot.
+  char receiveId1[EEPROM_TELEGRAM_CLIENT_ID_LEN]; //User id who will receive messages from the bot.
+  char receiveId2[EEPROM_TELEGRAM_CLIENT_ID_LEN]; //User id who will receive messages from the bot. Reserved!
+};
+  
 //Save wifi settings to eeprom. 
 bool saveWifiSettings(const String &ssid, const String &password);
 
@@ -72,4 +81,21 @@ void initPingWatchDog();
 void ledBlinkModeFindWifi();
 //Set normal blink mode.
 void ledBlinkNormalMode();
+//Read analog value from A0 pin.
+void readAdc();
 
+//Create string for html.
+String getGazDetectorValue();
+
+//Get and set system params safely.
+String getTgBotToken();
+void setTgBotToken(String token);
+
+//Id user who receives messages from the bot
+String getReceiveId(int number);
+void setReceiveId(String userId, int number);
+
+//Store system settings to flash.
+void writeSettingsToFlash();
+//Read system settings from flash.
+void readSettingsFromFlash();

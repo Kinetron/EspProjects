@@ -1,6 +1,7 @@
 #include "WebServer.h"
 #include "webPages/default.h"
 #include "webPages/mainPage.h"
+#include "webPages/adminPage.h"
 
 const char responsePage[] PROGMEM = R"=====(
 <!DOCTYPE html>
@@ -17,13 +18,14 @@ const char responsePage[] PROGMEM = R"=====(
 
 //Establishing Local server at port 80 whenever required
 ESP8266WebServer server(80);
-ESP8266HTTPUpdateServer httpUpdater;
+//ESP8266HTTPUpdateServer httpUpdater;
 const char* host = "esp8266-webupdate";
 
 String webServerContent; //web server content
 int webStatusCode; //Web server last status code.
 extern String wifi_stations; //Available access points, from scan.
 bool UPDATE;
+String errorText; //Text with error for answer user.
 
 //Return page whith wifi settings.
 void createWebServerWithDefaultPage()
@@ -44,7 +46,7 @@ void createWebServerWithDefaultPage()
     server.on("/wifiSet", []() {
       String ssid = server.arg("ssid");
       String pass = server.arg("pass");
-	  String result = "";
+	    String result = "";
       	  
       if(ssid.length() == 0 || pass.length() == 0 || ssid.length() > EEPROM_CLIENT_SSID_LEN 
       || pass.length() >  EEPROM_CLIENT_PASSWORD_LEN) 
@@ -54,7 +56,7 @@ void createWebServerWithDefaultPage()
       else
       {
         if(!saveWifiSettings(ssid, pass))
-		{
+		    {
            result =  "{\"Error\":\"Error save to flash.\"}";
         }
         else
@@ -76,7 +78,9 @@ void createWebServer()
     server.on("/", []() {
 	  String page = mainPage;
 
-	  page.replace("@temperature", getTemperatureHtml());	  
+	    page.replace("@temperature", getTemperatureHtml());	 
+      page.replace("@gazValue", "Gaz value: " + getGazDetectorValue());	 
+
       server.send(200, "text/html", page);
     });    
 
@@ -87,15 +91,27 @@ void createWebServer()
        server.send(200, "text/html", page);
    });
 
-   //server.on("/update", [](){webUpdate();});
+   server.on("/admin", []() {
+    String page = adminPage;
+    readSettingsFromFlash();
+    page.replace("@botToken",  getTgBotToken());
+    page.replace("@receiveId0", getReceiveId(0));
+    page.replace("@receiveId1", getReceiveId(1));
+    
+    server.send(200, "text/html", page);
+   });
+
+   server.on("/saveSettings", HTTP_POST,[]() {
+    postSaveSettings();
+   });
 }
 
 void runWebServer()
 {  
-  MDNS.begin(host);
-  httpUpdater.setup(&server);
+  //MDNS.begin(host);
+  //httpUpdater.setup(&server);
   server.begin();
-  MDNS.addService("http", "tcp", 80); 
+  //MDNS.addService("http", "tcp", 80); 
 }
 
 void handleClient()
@@ -122,39 +138,72 @@ void initWebServer(bool pageType)
 //For OTA update firmware.
 void mdnsUpdate()
 {
-  MDNS.update();
+ // MDNS.update();
 }
 
-/*
-void otaStart(const char* linkOTA)
+void postSaveSettings()
 {
-  WiFiClientSecure otaWiFi;
-  // Запускаем обновление
-  t_httpUpdate_return ret = ESPhttpUpdate.update(otaWiFi, linkOTA);
-  // Анализируем результат
-  switch(ret) {
-    case HTTP_UPDATE_FAILED:
-      Serial.println("OTA :: Update failed");
-      break;
-    case HTTP_UPDATE_NO_UPDATES:
-      Serial.println("OTA :: Update no Updates");
-      break;
-    case HTTP_UPDATE_OK:
-      // А вот это сообщение не факт, что вы увидите, потому что esp будет перезагружена
-      Serial.println("OTA :: Update OK");
-      break;
-}
-      */
+  String botToken = server.arg("botToken");
+  String receiveId0 = server.arg("receiveId0"); //First user id can't empty.
+  String receiveId1 = server.arg("receiveId1"); //First user id can't empty.
 
-void webUpdate()
-{
-  if(!UPDATE)
+  String answer = adminPageAnswer;
+
+  //Check user input.
+  if(!validateBotSettings(botToken, receiveId0))
   {
-    httpUpdater.setup(&server);
-     Serial.print("WiFi.localIP:  ");
-     Serial.println(WiFi.localIP());
-     Serial.println("HTTP UpdateServer started");
-      yield();
-    UPDATE = true;
+    answer.replace("@infoText", "Error!");
+    answer.replace("@errorText", errorText);
+
+    server.send(200, "text/html", answer);
+    return;  
   }
+
+  setTgBotToken(botToken);
+  setReceiveId(receiveId0, 0);
+  setReceiveId(receiveId1, 1);
+  writeSettingsToFlash();
+  /*
+   if(!saveTgBotToken(botToken))
+   {
+    answer.replace("@infoText", "Error!");
+    answer.replace("@errorText", "Can't save data to flash!");
+    server.send(200, "text/html", answer);
+    return; 
+   }
+*/
+
+   answer.replace("@infoText", "Successfully!");
+   answer.replace("@errorText", "");
+   server.send(200, "text/html", answer);
+}
+
+//Check user input.
+bool validateBotSettings(String botToken, String userId)
+{
+  if(botToken.length() == 0)
+  {
+    errorText = "Bot token is empty.";
+    return false;
+  }
+  
+  if(userId.length() == 0)
+  {
+    errorText = "UserId id is empty.";
+    return false;
+  }  
+
+  if(botToken.length() > EEPROM_TELEGRAM_BOT_TOKEN_LEN)
+  {
+    errorText = "Bot token too long.";
+    return false;
+  }
+  
+  if(userId.length() > EEPROM_TELEGRAM_CLIENT_ID_LEN)
+  {
+    errorText = "UserId id too long .";
+    return false;
+  } 
+
+  return true;
 }

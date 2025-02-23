@@ -1,0 +1,5 @@
+
+
+If bot settings empty if first run - no tun bot
+
+Add adafruit account

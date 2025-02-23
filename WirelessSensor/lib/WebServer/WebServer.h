@@ -18,7 +18,7 @@ void initWebServer(bool pageType);
 //Return page with wifi settings.
 void createWebServerWithDefaultPage();
 
-void webUpdate();
+
 //Create server with mane page.
 void createWebServer();
 
@@ -27,3 +27,9 @@ void handleClient();
 //For OTA update firmware.
 void mdnsUpdate();
 void otaStart(const char* linkOTA);
+
+//Save bot and recived user id? work if HTTP_POST
+void postSaveSettings();
+
+//Check user input.
+bool validateBotSettings(String botToken, String userId);

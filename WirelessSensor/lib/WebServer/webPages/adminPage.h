@@ -1,0 +1,116 @@
+const char adminPage[] PROGMEM = R"=====(
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+	<title>Device settings</title>
+	<style>
+		input[type=submit],
+		input[type=button],
+		button {
+			height: 35px;
+			font-size: 20px;
+			width: 90%;
+			max-width: 300px;
+			margin: 8px 5px;
+			background-color: #4CAF50;
+			border: none;
+			border-radius: 8px;
+			color: white;
+			cursor: pointer;
+			padding: 0px 10px;
+		}
+				
+		body {
+			font-family: Verdana;
+			margin-top: 15px;
+		}
+
+		label {
+			white-space: nowrap;
+			font-size: 20px;
+			margin: 0 5px;
+		}
+		p {
+			font-size: 20px;
+			border-radius: 10px;
+			background-color: #f2f2f2;
+			box-shadow: #aaa 0px 0px 10px;
+			margin: 15px;
+		}
+
+		.access-token-input 
+		{
+			width: 400px;
+		}
+
+		.wifi-stations-block {
+			font-size: 20px;
+			border-radius: 10px;
+			background-color: #ffffff;
+			box-shadow: #fafad2 0px 0px 10px;
+			margin: 15px;
+		}		
+	</style>
+</head>
+<body>
+<p>
+	Telegram bot settings<br>
+</p>
+<p>
+	<div>
+		Warning: Keep your token secure and store it safely, it can be used by anyone to control your bot.
+	</div>
+	<br>
+	<form method='post' action='saveSettings'>
+			<table>
+			<tr>
+				<td>
+					<label>Bot token</label>
+				</td>
+					<td>
+						<input name='botToken' length=640 class="access-token-input" value="@botToken">
+				</td>
+			</tr>
+			<tr>
+				<td>
+					<label>Receive userid 0</label>
+				</td>
+				<td>
+					<input name='receiveId0' length=64 value="@receiveId0">
+				</td>
+			</tr>
+			<tr>
+				<td>
+					<label>Receive userid 1</label>
+				</td>
+				<td>
+					<input name='receiveId1' length=64 value="@receiveId1">
+				</td>
+			</tr>
+		</table>
+		<input type='submit' value="Save settings">
+	</form>
+</p>
+</body>
+</html>
+)=====";
+
+const char adminPageAnswer[] PROGMEM = R"=====(
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<title>Admin settings</title>
+</head>
+<body>
+<a href="/admin">To admin page</a><br>
+<p>
+@infoText
+</p>
+<p>
+@errorText
+</p>
+</body>
+</html>
+)=====";

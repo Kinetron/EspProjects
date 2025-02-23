@@ -50,10 +50,12 @@ void setup() {
    
    //ESP.wdtEnable(15000);
 
+   readSettingsFromFlash();
    initWebServer(false); //Init with main page.
    initTgBot();
    
    ledBlinkNormalMode();
+   
    //initPingWatchDog();
    //debug
   Serial.begin(9600);
@@ -63,7 +65,7 @@ void setup() {
 
 void loop() {   
   handleClient(); //Processing incoming requests
-  mdnsUpdate();
+  //mdnsUpdate();
   //Check wifi autoreconnect.
   MQTT_connect(); 
   systemScheduler();
