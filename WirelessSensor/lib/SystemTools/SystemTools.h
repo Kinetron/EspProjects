@@ -38,6 +38,16 @@ struct FlashSettingsStruct_t
   char receiveId2[EEPROM_TELEGRAM_CLIENT_ID_LEN]; //User id who will receive messages from the bot. Reserved!
 };
   
+//Data from admin page.
+struct AdminPageStruct_t  
+{
+  String botToken;
+  String receiveId0;
+  String receiveId1;
+  String adafruitServer;
+};
+
+
 //Save wifi settings to eeprom. 
 bool saveWifiSettings(const String &ssid, const String &password);
 

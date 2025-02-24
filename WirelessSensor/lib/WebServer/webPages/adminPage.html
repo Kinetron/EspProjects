@@ -55,15 +55,20 @@
 </head>
 <body>
 <p>
-	Telegram bot settings<br>
+	System settings<br>
 </p>
-<p>
+<p>	
 	<div>
 		Warning: Keep your token secure and store it safely, it can be used by anyone to control your bot.
 	</div>
 	<br>
 	<form method='post' action='saveSettings'>
 			<table>
+			<tr>
+				<td colspan = 2>
+					<p>Telegram bot settings</p>
+				</td>
+			</tr>			
 			<tr>
 				<td>
 					<label>Bot token</label>
@@ -88,6 +93,93 @@
 					<input name='receiveId1' length=64 value="@receiveId1">
 				</td>
 			</tr>
+			<tr>
+				<td colspan = 2>
+					<p>Adafruit settings</p>
+				</td>
+			</tr>	
+			<tr>
+				<td>
+					<label>Adafruit server</label>
+				</td>
+				<td>
+					<input name='adafruitServer' value="@adafruitServer">
+				</td>
+			</tr>
+			<tr>
+				<td>
+					<label>Adafruit port</label>
+				</td>
+				<td>
+					<input name='adafruitPort' value="@adafruitPort">
+				</td>
+			</tr>
+			<tr>
+				<td>
+					<label>Adafruit username</label>
+				</td>
+				<td>
+					<input name='adafruitUser' value="@adafruitUser">
+				</td>
+			</tr>	
+			<tr>
+				<td>
+					<label>Adafruit app key</label>
+				</td>
+				<td>
+					<input name='adafruitAppKey' value="@adafruitAppKey">
+				</td>
+			</tr>
+			<tr>
+				<td colspan = 2>
+					<p></p>
+				</td>
+			</tr>
+			<tr>
+				<td>
+					<label>Temperature feeds name</label>
+				</td>
+				<td>
+					<input name='aioTempatureName' value="@adafruitTempatureName">
+				</td>
+			</tr>
+			<tr>
+				<td>
+					<label>Gaz sensor feeds name</label>
+				</td>
+				<td>
+					<input name='aioGazName' value="@aioGazName">
+				</td>
+			</tr>	
+			<tr>
+				<td colspan = 2>
+					<p>Alarms thresholds</p>
+				</td>
+			</tr>
+			<tr>
+				<td>
+					<label>Min temperature</label>
+				</td>
+				<td>
+					<input name='minAlarmTemperature' value="@minAlarmTemperature">
+				</td>
+			</tr>
+			<tr>
+				<td>
+					<label>Max temperature</label>
+				</td>
+				<td>
+					<input name='maxAlarmTemperature' value="@maxAlarmTemperature">
+				</td>
+			</tr>
+			<tr>
+				<td>
+					<label>Alarm gaz value</label>
+				</td>
+				<td>
+					<input name='alarmGazValue' value="@alarmGazValue">
+				</td>
+			</tr>			
 		</table>
 		<input type='submit' value="Save settings">
 	</form>

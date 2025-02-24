@@ -38,6 +38,8 @@ int gazDetectorAdcValue;
 
 //System settings.
 struct FlashSettingsStruct_t systemSettings;
+//Admin page data.
+struct AdminPageStruct_t adminPageSettings;
 
 String tgBotToken = "";
 
